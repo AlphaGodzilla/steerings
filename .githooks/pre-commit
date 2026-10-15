@@ -1,0 +1,45 @@
+#!/bin/sh
+# pre-commit：从 ../agent2/AGENTS.md 重新生成本仓库副本 agent2-AGENTS.md。
+#
+# 暂存区为空时的行为（Git 2.54 实测）：
+# - 工作区干净：git commit 报 nothing to commit；钩子暂存的副本不入本次提交，留在暂存区，下一次提交才带上。
+# - 工作区有未暂存改动：副本被单独提交，未暂存的改动不入库。
+# 因此暂存区为空时本钩子不暂存副本：副本有变化则中止提交，提示用户 git add 后重新提交。
+#
+# 源文件 agent2/AGENTS.md 是唯一真相源：本钩子只读取它，从不写入；直接改副本会被下次提交覆盖。
+# 副本中的 ~/.pi/steerings/ 引用改写为 ./，使引用指向本仓库内的文件。
+# 启用方式（每个克隆执行一次）：git config core.hooksPath .githooks
+# 跳过同步：git commit --no-verify
+set -eu
+
+top=$(git rev-parse --show-toplevel)
+cd "$top"
+
+src="../agent2/AGENTS.md"
+dst="agent2-AGENTS.md"
+
+if [ ! -f "$src" ]; then
+  echo "pre-commit: 源文件不存在: $src" >&2
+  exit 1
+fi
+
+{
+  printf '%s\n' '<!-- 由 .githooks/pre-commit 从 agent2/AGENTS.md 生成，禁止手工修改 -->'
+  sed -e 's|~/\.pi/steerings|.|g' "$src"
+} > "$dst"
+
+# 护栏：源文件若使用了 sed 未覆盖的写法（如 $HOME/.pi/steerings），副本引用会失效，此时中止提交
+if grep -q '\.pi/steerings' "$dst"; then
+  echo "pre-commit: 副本中残留 steerings 绝对路径，请在 agent2/AGENTS.md 中统一写成 ~/.pi/steerings/" >&2
+  exit 1
+fi
+
+if git diff --cached --quiet; then
+  if [ -n "$(git status --porcelain -- "$dst")" ]; then
+    echo "pre-commit: $dst 已更新但未暂存。请执行 git add $dst 后重新提交。" >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+git add -- "$dst"
