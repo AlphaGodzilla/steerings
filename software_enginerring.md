@@ -21,5 +21,6 @@
 | HTTP API 文档、OpenAPI / SpringDoc、Swagger UI / Knife4j、Tag、认证与文档验收 | [API 文档规约](./apidoc.md) |
 | Redis、Redisson 分布式锁、一次性令牌状态与安全命名空间 | [Redis 规约](./redis.md) |
 | PostgreSQL、JPA / JDBC、SQL、分页、索引、类型映射、Flyway 迁移 | [PostgreSQL 规约](./pgsql.md) |
+| 需求建模、本体建模（OMF v6）、代码库逆向建模 | [本体建模规约](./ontology-driven-modeling.md) |
 
 上述文件位于 `~/.pi/steerings/`，仅保留通用技术约束，不携带具体业务域、专用接口或本机部署路径。当前项目的 `AGENTS.md` / `CLAUDE.md` 仍须先读；技术基线或约束冲突时先确认，不机械套用其他项目的版本、目录或运行环境。
